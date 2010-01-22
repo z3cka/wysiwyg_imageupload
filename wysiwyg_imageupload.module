@@ -2,6 +2,9 @@
 # Copyright (c) 2010 Impressive.media
 # Author: Eugen Mayer
 
+require_once('wysiwyg_imageupload.file.inc');
+require_once('wysiwyg_imageupload.form.inc');
+require_once('wysiwyg_imageupload.ajax.inc');
 function wysiwyg_imageupload_menu() {
   $items = array();
   $items['ajax/wysiwyg_imgupl/add/%'] = array(
@@ -21,7 +24,7 @@ function wysiwyg_imageupload_menu() {
   );
 
   $items['ajax/wysiwyg_imgupl/upload/%'] = array(
-  	'page callback' => '_wysiwyg_imageupload_upload',
+  	'page callback' => '_wysiwyg_imageupload_upload_js',
   	'page arguments' => array(3),
     'access callback' => 'user_access',
     'access arguments' => array('use wysiyg image upload'),
@@ -60,12 +63,47 @@ function wysiwyg_imageupload_wysiwyg_include_directory($type) {
   }
 }
 
+/*
+ * Implementation of hook_perm
+ */
+function wysiwyg_imageupload_perm($type) {
+  return('use wysiyg image upload');
+}
+
+/*
+ * implementation of hook_init
+ */
 function wysiwyg_imageupload_init() {
   $m = drupal_get_path('module', 'wysiwyg_imageupload');
   drupal_add_css($m.'/plugins/imgupload/imgupload.css');
 }
 
+/*
+ * Shared with the upload module
+ */
+function wysiwyg_imageupload_nodeapi(&$node, $op, $teaser) {
+  switch ($op) {
+    case 'load':
+      $output['images'] = _wysiwyg_imageupload_load($node);
+      return $output;
+    break;
+    case 'insert':
+    case 'update':
+      if (user_access('use wysiyg image upload')) {
+        _wysiwyg_imageupload_save($node);
+      }
+      break;
+  }
+}
+
+/*
+ * Implementation of hook_form_alter
+ * Adding jquery_ui_dialog javascript / css definitions to the form
+ */
 function wysiwyg_imageupload_form_alter(&$form, $form_state, $form_id){
+  // Even if the wysiwyg_imageupload button is not activate, we need to load the
+  // jquery_ui_dialog preconditions. The user might switch the editor on the node form
+  // then we would need it
   if ($form['#id'] == 'node-form' ) {
     jquery_ui_dialog_parent_js();
     $form['#submit'][] = 'wysiwyg_imageupload_form_submit';
@@ -74,272 +112,6 @@ function wysiwyg_imageupload_form_alter(&$form, $form_state, $form_id){
   if(strstr($form_state['post']['form_id'],'node_form')) {
     jquery_ui_dialog_parent_js();
   }
-}
-
-function wysiwyg_imageupload_form_submit($form_id, $form_values) {
-  if(is_array($form_values['storage']['wysiwyg_upload'])) {
-    foreach($form_values['storage']['wysiwyg_upload']['files'] as $fid => $file) {
-      // Make file permanent;
-      file_set_status($file,FILE_STATUS_PERMANENT);
-    }
-  }
-}
-
-/*
- * Returns the general image upload form.
- * This form is shown before an image has been uploaded,
- * afterwards it is replaced by the image details form
- */
-function wysiwyg_imageupload_upload_form(&$form_state,$form_id) {
-  jquery_ui_dialog_child_js();
-  module_invoke('admin_menu', 'suppress');
-  drupal_set_title(t('Upload image'));
-  $form = array();
-  $form['#attributes'] = array('enctype' => "multipart/form-data");
-  $form['image_upload'] = array(
-    '#type' => 'fieldset',
-    '#title'=> t('Upload image'),
-    '#prefix' => '<div id="file_upload_group">',
-    '#suffix' => '</div>');
-  _wysiwyg_imageupload_form_add_uploadfields($form,$form_id);
-
-  return $form;
-}
-
-/*
- * Returning the form elements for the image upload
- */
-function _wysiwyg_imageupload_form_add_uploadfields(&$form, $form_id) {
-  $form['image_upload']['wysiwyg_imageupload_file'] = array(
-    '#type' => 'file',
-    '#title' => t('Choose an image'),
-    '#size' => 40,
-  );
-  $form['image_upload']['start_upload'] = array(
-    '#type' => 'submit',
-    '#value' => t('Upload image'),
-    '#name' => 'attach',
-    '#ahah' => array(
-      'path' => "ajax/wysiwyg_imgupl/upload/$form_id",
-      'wrapper' => 'file_upload_group',
-      'progress' => array('type' => 'bar', 'message' => t('Please wait...')),
-  ),
-  );
-}
-
-/*
- * Called through ajax(AHAH), uploading an image and replacing
- * the upload form with an image-details form, if successfully uploaded
- */
-function _wysiwyg_imageupload_upload($form_build_id) {
-  $_POST['form_build_id'] = $form_build_id;
-
-  // Load the form from the Form API cache.
-  $form_state = array('submitted' => FALSE);
-  $form = form_get_cache($_POST['form_build_id'], $form_state);
-
-  // TOOD: needed?
-  $_POST['form_token'] = $form['form_token']['#default_value'];
-  $_POST['form_id'] = $form['form_id']['#value'];
-
-  $form['#post'] = $_POST;
-
-  // Handle new uploads, and merge tmp files into node-files.
-  $imgDetails = _wysiwyg_imageupload_upload_file($form_state);
-
-  // remove all status messages
-  drupal_get_messages('status',true);
-  if(is_object($imgDetails)) {
-    // Save the main form in the cache, adding the file.
-    //$form_state['storage']['wysiwyg_upload']['files'][$imgDetails->fid] = $imgDetails;
-    //form_set_cache($form_build_id, $form, $form_state);
-
-    $output = theme('status_messages');
-    // No errors, so lets replace the upload widget with the image details
-    $title = $imgDetails->filename;
-
-    // We save the fielpath in our cache, so we dont need to pass it later as a GET variable
-    // (when we let the html object generate using ajax).
-    $cacheid = uniqid();
-    cache_set($cacheid,$imgDetails->filepath,'cache',CACHE_TEMPORARY);
-    // This is our thumbnail. It also saves the cacheid in alt. We will inject this into the details form.
-    // TODO: maybe really generate a small thumbnail and not reuse / resize the original using the browser,
-    $img = "<img id='uploadedImage' title='$title' alt='$cacheid' height='200px;border:1px solid black;margin:auto' src='{$imgDetails->filepath}'>".$output;
-
-    // Create the form image detail form.
-    $form = array();
-    $form_state = array();
-    $form = _wysiwyg_imageupload_details_form($title,$img);
-
-    $form = form_builder('wysiwyg_image_detailsform', $form, $form_state);
-    $output = drupal_render($form).$output;
-  }
-  else {
-    drupal_set_message(t('Select a file to upload first'),'error');
-    $output = theme('status_messages');
-    // The upload failed, show the upload widget once again.
-    $object->files = $files;
-    //_wysiwyg_imageupload_form_add_uploadfields($form,$form_build_id);
-    $form = array();
-    //$form['#attributes'] = array('enctype' => "multipart/form-data");
-    $form['image_upload'] = array( '#type' => 'fieldset',
-      '#title'=> t('Upload image'),
-      '#prefix' => '<div id="file_upload_group">',
-      '#suffix' => '</div>');
-    _wysiwyg_imageupload_form_add_uploadfields($form,$form_id);
-    $form = form_builder($form_build_id, $form, $form_state);
-    $output = $output.drupal_render($form);
-  }
-  // as we are an AHAH callback, lets convert to JSON
-  print drupal_to_js(array('status' => TRUE, 'data' => $output));
-  exit;
-}
-
-
-function wysiwyg_imageupload_update_form(&$form_state, $title, $preset, $floating, $style) {
-  jquery_ui_dialog_child_js();
-  module_invoke('admin_menu', 'suppress');
-  drupal_set_title(t('Update image'));
-  $cacheid = uniqid();
-  cache_set($cacheid,$_GET['imagepath'],'cache',CACHE_TEMPORARY);
-  $img = "<img id='uploadedImage' title=\"$title\" alt='$cacheid' height='200px;border:1px solid black;margin:auto' src='{$_GET['imagepath']}'>";
-
-  $defaults = array (
-    'filepath' => check_plain(urldecode($_GET['imagepath'])),
-    'preset' => check_plain(urldecode($preset)),
-    'floating' => check_plain(urldecode($floating)),
-    'style' =>check_plain(urldecode($style)),
-  );
-
-  // Create the form image detail form.
-  $form = _wysiwyg_imageupload_details_form($title,$img,$defaults);
-
-  return $form;
-}
-
-
-/*
- * Return the form to be presented as image details form.
- * Title, floating description and so forth
- */
-function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
-  // TODO: would love to add some drupal_alter stuff here, but we will need to
-  // have something similar on the javascript side.
-  $form = array();
-  $form['image_upload'] = array( '#type' => 'fieldset',
-    '#title'=> t('Upload picture'),
-    '#prefix' => '<div id="file_upload_group">',
-    '#suffix' => '</div>'
-  );
-  $form['image_upload']['uploadedImage'] = array (
-    '#prefix' => '<div>',
-    '#suffix' => '</div>',
-    '#value' => $img
-  );
-  $form['image_upload']['title'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Title'),
-    '#default_value' => $title
-  );
-
-  $form['image_upload']['alignment'] = array(
-    '#type' => 'select',
-    '#title' => t('Text floating'),
-    '#options' => array(
-      'imgupl_floating_none' => t('Below image (none)'),
-      'imgupl_floating_left' => t('Text right beside image'),
-      'imgupl_floating_right' => t('Text left beside image')
-    ),
-    '#default_value' => $defaults['floating']);
-
-
-   // ImageCache support.
-  if (module_exists('imagecache')) {
-    $presets = imagecache_presets();
-    $styles = array();
-    foreach ($presets as $preset) {
-      $styles[$preset['presetname']] = t($preset['presetname']);
-    }
-    $form['image_upload']['preset'] = array(
-      '#type' => 'select',
-      '#title' => t('Size'),
-      '#options' => $styles,
-      '#default_value' => $defaults['preset']
-    );
-   }
-
-   // styles.
-   $styles = _wysiwyg_imageupload_get_image_styles();
-   if(count($styles) > 0) {
-      array_unshift($styles, t('None'));
-      $form['image_upload']['style'] = array(
-        '#type' => 'select',
-        '#title' => t('Style'),
-        '#options' => $styles,
-        '#default_value' => $defaults['style']
-      );
-   }
-
-  // TODO: collapsable not working. Maybe anyway use jquery_accordion or tabs here
-   /*
-   drupal_add_js('misc/collapse.js');
-  $form['image_upload']['advanced'] = array(
-    '#type' =>'fieldset',
-    '#title' => t('Extra'),
-    '#collapsible' => true,
-
-    );
-  $form['image_upload']['advanced']['caption'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Caption')
-  );
-  $form['image_upload']['advanced']['description'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Description')
-  );
-  */
-   return $form;
-}
-
-/*
- * Uploading a image and calling the file_insert hooks.
- */
-function _wysiwyg_imageupload_upload_file(&$form_state) {
-  global $user;
-
-  $dest = file_directory_path();
-  $validators = array( 'file_validate_is_image' => array() );
-  if (
-        ($user->uid == 1 || user_access('attach files')) &&
-        ($file = file_save_upload('wysiwyg_imageupload_file', $validators, $dest,FILE_EXISTS_RENAME)))
-  {
-    foreach (module_implements('file_insert') as $module) {
-      $function =  $module .'_file_insert';
-      $function($file);
-    }
-
-    if (!@chmod($file->filepath, 0664)) {
-      watchdog('wysiwyg_imageupload', 'Could not set permissons on destination file: %file', array('%file' => $file->filepath));
-    }
-
-    return $file;
-  }
-
-  return NULL;
-}
-
-/*
- * Ajax callback.
- * Using the cacheID to determine the filepath and returns a html image object
- * If imagecache is installed, use the preset
- */
-function _wysiwyg_imageupload_show_image($cacheID,$preset) {
-   if (module_exists('imagecache')) {
-    $filepath = cache_get($cacheID,'cache');
-    $GLOBALS['devel_shutdown'] = FALSE;
-    print theme('imagecache',$preset,$filepath->data, $filepath->data);
-    exit;
-   }
 }
 
 /*
@@ -355,11 +127,4 @@ function _wysiwyg_imageupload_get_image_styles() {
   }
   drupal_alter('wysiwyg_imageupload_image_styles', $styles);
   return $styles;
-}
-
-/**
- * Implementation of hook_theme().
- */
-function wysiwyg_imageupload_theme() {
-  return array();
 }
