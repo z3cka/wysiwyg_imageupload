@@ -23,7 +23,10 @@ Drupal.wysiwyg.plugins.imgupload = {
       // Default
       var options = { title: '', src: '', align: '', width: '', height: '', id: instanceId, action: 'insert'};
       // Is a img selected in the content, which we can edit?
-      if ($(data.node).is('img.imgupload')) {
+      // We can use is.(img.imgupload) here, as some editors pass this node surrounded by a <p>
+      // tag
+      if ($(data.node).find('img.imgupload').length == 1) {
+        data.node = $(data.node).find('img.imgupload').get(0);
         options.floating = data.node.align;
         // Expand inline tag in alt attribute
         options.alt = decodeURIComponent(data.node.alt);

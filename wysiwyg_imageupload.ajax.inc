@@ -16,7 +16,7 @@ function _wysiwyg_imageupload_upload_js($node_form_build_id) {
 
   form_set_cache($node_form_build_id, $cached_form, $cached_form_state);
   // remove all status messages
-//  drupal_get_messages('status',true);
+  //drupal_get_messages('status',true);
   if($imgDetails->filepath != "") {
     // Save the main form in the cache, adding the file.
     //$form_state['storage']['wysiwyg_upload']['files'][$imgDetails->fid] = $imgDetails;
@@ -38,7 +38,7 @@ function _wysiwyg_imageupload_upload_js($node_form_build_id) {
     $form = array();
     $form_state = array();
     $form = _wysiwyg_imageupload_details_form($title,$img);
-
+$output = theme('status_messages');
     $form = form_builder('wysiwyg_imageupload_detailsform', $form, $form_state);
     $output = drupal_render($form).$output;
   }

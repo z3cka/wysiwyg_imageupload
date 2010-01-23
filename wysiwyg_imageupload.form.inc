@@ -1,5 +1,14 @@
 <?php
 
+
+function wysiwyg_imageupload_form_submit(&$form, &$form_state) {
+  // We need to do those that, otherwise our saved images in the cache
+  // are not included in the node object when the nodeapi is called
+  if(!empty($form['#node']->images) && is_array($form['#node']->images)) {
+    $form_state['values']['images'] = $form['#node']->images;
+  }
+}
+
 /*
  * Returns the general image upload form.
  * This form is shown before an image has been uploaded,
@@ -19,15 +28,6 @@ function wysiwyg_imageupload_upload_form(&$form_state,$form_id) {
   _wysiwyg_imageupload_form_add_uploadfields($form,$form_id);
 
   return $form;
-}
-
-
-function wysiwyg_imageupload_form_submit(&$form, &$form_state) {
-  // We need to do those that, otherwise our saved images in the cache
-  // are not included in the node object when the nodeapi is called
-  if(!empty($form['#node']->images) && is_array($form['#node']->images)) {
-    $form_state['values']['images'] = $form['#node']->images;
-  }
 }
 
 /*
@@ -81,7 +81,7 @@ function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
 
    // styles.
    $styles = _wysiwyg_imageupload_get_image_styles();
-   if(count($styles) > 0) {
+   if(count($styles) > 0) { // If any.
       array_unshift($styles, t('None'));
       $form['image_upload']['style'] = array(
         '#type' => 'select',
