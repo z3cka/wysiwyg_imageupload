@@ -38,7 +38,6 @@ function _wysiwyg_imageupload_upload_js($node_form_build_id) {
     $form = array();
     $form_state = array();
     $form = _wysiwyg_imageupload_details_form($title,$img);
-$output = theme('status_messages');
     $form = form_builder('wysiwyg_imageupload_detailsform', $form, $form_state);
     $output = drupal_render($form).$output;
   }

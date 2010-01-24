@@ -51,7 +51,8 @@ function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
   $form['image_upload']['title'] = array(
     '#type' => 'textfield',
     '#title' => t('Title'),
-    '#default_value' => $title
+    '#default_value' => $title,
+    '#size' => 50
   );
 
   $form['image_upload']['alignment'] = array(
