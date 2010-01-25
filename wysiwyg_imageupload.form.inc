@@ -70,7 +70,7 @@ function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
     $presets = imagecache_presets();
     $styles = array();
     foreach ($presets as $preset) {
-      $styles[$preset['presetname']] = t($preset['presetname']);
+      $styles[$preset['presetid']] = t($preset['presetname']);
     }
     $form['image_upload']['preset'] = array(
       '#type' => 'select',
@@ -125,7 +125,7 @@ function wysiwyg_imageupload_update_form(&$form_state, $title, $preset, $floatin
   drupal_set_title(t('Update image'));
   $cacheid = uniqid();
   cache_set($cacheid,$_GET['imagepath'],'cache',CACHE_TEMPORARY);
-  $img = "<img id='uploadedImage' title=\"$title\" alt='$cacheid' height='200px;border:1px solid black;margin:auto' src='{$_GET['imagepath']}'>";
+  $img = "<img id='uploadedImage' title=\"$title\" alt='$cacheid' height='200px;border:1px solid black;margin:auto' src='". base_path() . $_GET['imagepath']."'>";
 
   $defaults = array (
     'filepath' => check_plain(urldecode($_GET['imagepath'])),

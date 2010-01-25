@@ -31,9 +31,9 @@ function wysiwyg_imageupload_menu() {
   	'type' => MENU_CALLBACK,
   );
 
-  $items['ajax/wysiwyg_imgupl/showimage/%/%'] = array(
+  $items['ajax/wysiwyg_imgupl/showimage/%'] = array(
     'page callback' => '_wysiwyg_imageupload_show_image',
-    'page arguments' => array(3,4),
+    'page arguments' => array(3,4,5),
     'access callback' => 'user_access',
     'access arguments' => array('use wysiyg image upload'),
     'type' => MENU_CALLBACK,
@@ -67,7 +67,7 @@ function wysiwyg_imageupload_wysiwyg_include_directory($type) {
  * Implementation of hook_perm
  */
 function wysiwyg_imageupload_perm() {
-  return array('use wysiyg image upload');
+  return array('use wysiwyg image upload');
 }
 
 /*
@@ -135,12 +135,18 @@ function _wysiwyg_imageupload_get_image_styles() {
  * Default image preset
  */
 function wysiwyg_imageupload_imagecache_default_presets() {
+  // Only expose those presets if no presets in the system right now
+  $presets = imagecache_presets();
+  if(count($presets) > 0) {
+    return array();
+  }
+
   $presets = array();
-  $presets['Original'] = array (
+  $presets['original'] = array (
     'presetname' => t('Original size'),
     'actions' => array (),
   );
-  $presets['Big'] = array (
+  $presets['big'] = array (
     'presetname' => t('Big'),
     'actions' =>
     array (

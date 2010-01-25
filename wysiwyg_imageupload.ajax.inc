@@ -32,7 +32,7 @@ function _wysiwyg_imageupload_upload_js($node_form_build_id) {
     cache_set($cacheid,$imgDetails->filepath,'cache',CACHE_TEMPORARY);
     // This is our thumbnail. It also saves the cacheid in alt. We will inject this into the details form.
     // TODO: maybe really generate a small thumbnail and not reuse / resize the original using the browser,
-    $img = "<img id='uploadedImage' title='$title' alt='$cacheid' height='200px;border:1px solid black;margin:auto' src='{$imgDetails->filepath}'>".$output;
+    $img = "<img id='uploadedImage' title='$title' alt='$cacheid' height='200px;border:1px solid black;margin:auto' src='". base_path() . $imgDetails->filepath ."'>".$output;
 
     // Create the form image detail form.
     $form = array();
@@ -65,11 +65,11 @@ function _wysiwyg_imageupload_upload_js($node_form_build_id) {
  * Using the cacheID to determine the filepath and returns a html image object
  * If imagecache is installed, use the preset
  */
-function _wysiwyg_imageupload_show_image($cacheID,$preset) {
+function _wysiwyg_imageupload_show_image($cacheID,$preset,$title) {
    if (module_exists('imagecache')) {
     $filepath = cache_get($cacheID,'cache');
     $GLOBALS['devel_shutdown'] = FALSE;
-    print theme('imagecache',$preset,$filepath->data, $filepath->data);
+    print theme('imagecache',$preset,$filepath->data, $filepath->data,$title);
     exit;
    }
 }
