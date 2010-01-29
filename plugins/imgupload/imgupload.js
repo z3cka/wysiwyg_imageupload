@@ -149,7 +149,8 @@ Drupal.wysiwyg.plugins.imgupload = {
          .filter('img') /* but if the root is not an img we don't need it */
          .addClass('imgupload')
          .addClass(args.floating)
-         .addClass(args.style);
+         .addClass(args.style)
+         .attr('title',args.title);
       img = img.imguploadOuterHTML();
       Drupal.wysiwyg.plugins.imgupload.insertIntoEditor(img,args.editor_id);
     });

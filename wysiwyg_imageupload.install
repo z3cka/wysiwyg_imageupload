@@ -29,7 +29,7 @@ function _wysiwyg_imageupload_install_styles_if_missing() {
  */
 function wysiwyg_imageupload_schema() {
   $schema['wysiwyg_imageupload'] = array(
-    'description' => 'Stores the relation between uploaded images (files) and there parent nodes.',
+    'description' => 'Stores the relation between uploaded images (files) and their parent nodes.',
     'fields' => array(
       'fid' => array(
         'type' => 'int',
