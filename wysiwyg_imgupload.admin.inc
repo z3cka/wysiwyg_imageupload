@@ -1,4 +1,8 @@
 <?php
+// $Id$
+
+# Copyright (c) 2010 Impressive.media
+# Author: Eugen Mayer
 /*
  * Providing a administration interface for tagging.
  */

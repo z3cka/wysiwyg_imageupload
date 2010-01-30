@@ -1,7 +1,8 @@
 <?php
-
 // $Id$
 
+# Copyright (c) 2010 Impressive.media
+# Author: Eugen Mayer
 /**
  * Implementation of hook_install().
  */
@@ -89,5 +90,3 @@ function wysiwyg_imageupload_update_6104() {
   _wysiwyg_imageupload_install_styles_if_missing();
   return array();
 }
-
-?>
