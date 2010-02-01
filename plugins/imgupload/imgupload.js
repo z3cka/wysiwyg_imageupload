@@ -186,6 +186,11 @@ Drupal.wysiwyg.plugins.imgupload = {
        if (match != null) {
          options.style =  match[1];         
        } 
+       /* Hack to support the module image_caption */
+       match = this.match(/(caption)/i);
+       if (match != null) {
+         options.style =  match[1];         
+       }
        
        match = this.match(/imagecache[-](.*)/i);
        if (match != null) {
