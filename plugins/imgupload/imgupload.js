@@ -153,9 +153,9 @@ Drupal.wysiwyg.plugins.imgupload = {
 
     $.get(aurl,null,function(data,status) {
       // Use some jquery foo to set th title and align		  
-      img = $(data);  /* the whole tree returned by template */
-      img.find('img')  /* all img descendants of the root element */
-         .andSelf()  /* and the root element itself */
+      img = $(data);    /* the whole tree returned by template */
+      img.find('img')   /* all img descendants of the root element */
+         .andSelf()     /* and the root element itself */
          .filter('img') /* but if the root is not an img we don't need it */
          .addClass('imgupload')
          .addClass(args.floating)
