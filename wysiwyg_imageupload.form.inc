@@ -4,14 +4,71 @@
 # Copyright (c) 2010 Impressive.media
 # Author: Eugen Mayer
 
+
+
+/*
+ * Implementation of hook_form_alter
+ * Adding jquery_ui_dialog javascript / css definitions to the form
+ */
+function wysiwyg_imageupload_form_alter(&$form, $form_state, $form_id){
+  if ($form['#id'] == 'node-form' || $form['#id'] == 'comment-form' ) {
+    // We need $form_state['post']['form_build_id'] != "" as a additional condition, as there are cases that
+    // post is an empty array but it has not been submitted ( no preview, no save).
+    if(isset($form_state['post']) && is_array($form_state['post']) && $form_state['post']['form_build_id'] != '') {
+      _wysiwyg_imageupload_transfer_cache($form, $form_state);
+    }
+    else {
+      if (
+        $form['#id'] == 'comment-form' &&   // Should only match, if we have a comment formular
+        $form['cid']['#value'] != NULL      // If its a creation of a new comment, we dont need to load any files
+      ) {
+        // We need this special case, as there is no "op=load" in the hook_comment hook_comment
+        // so we cant load extra data like our files. We only call this on the first load of the edit form
+        // so on a preview or similar, we already have written this cache and only load (transfer) it
+        $files = _wysiwyg_imageupload_commment_load($form['cid']['#value']);
+      }
+      else if (
+        $form['#id'] == 'node-form' &&
+        $form['#node']->nid != NULL &&
+        !empty($form['#node']->imgupload_images)
+      ) {
+        $files = $form['#node']->imgupload_images;
+      }
+      // Save them in the cache, if there are any
+      if(is_array($files) && count($files) > 0) {
+        cache_set('wysiwyg_imageupload_'.$form['#build_id'],$files,'cache',CACHE_TEMPORARY);
+      }
+    }
+    // Comment form is incompatible with form caching see
+    // http://drupal.org/node/644222
+    if($form['#id'] != 'comment-form') {
+      // Activate form caching is we will need it by AHAH later
+      // case: node form + node preview submit
+      $form['#cache'] = TRUE;
+    }
+
+    drupal_add_js(array('wysiwyg_imageupload' => array('current_form' => $form['form_build_id']['#value'])), 'setting');
+    jquery_ui_dialog_parent_js();
+    $form['#validate'][] = 'wysiwyg_imageupload_form_validate';
+  }
+}
+
+function _wysiwyg_imageupload_transfer_cache($form, $form_state) {
+  $old_form_build_id = $form_state['post']['form_build_id'];
+  $new_form_build_id = $form['#build_id'];
+  // Lets get the old cache and set it to the new cache
+  $old = cache_get('wysiwyg_imageupload_'.$old_form_build_id);
+  // Now apply it using the new from_build_id
+  cache_set('wysiwyg_imageupload_'.$new_form_build_id,$old->data,'cache',CACHE_TEMPORARY);
+}
+
 /*
  * Called on every node save
  */
-function wysiwyg_imageupload_form_submit(&$form, &$form_state) {
-  // We need to do those that, otherwise our saved images in the cache
-  // are not included in the node object when the nodeapi is called
-  if(!empty($form['#node']->imgupload_images) && is_array($form['#node']->imgupload_images)) {
-    $form_state['values']['imgupload_images'] = $form['#node']->imgupload_images;
+function wysiwyg_imageupload_form_validate(&$form, &$form_state) {
+  if ($form_state['submitted'] == true) {
+    $value = cache_get('wysiwyg_imageupload_' . $form_state['values']['form_build_id'], 'cache');
+    $form_state['values']['imgupload_images'] = $value->data;
   }
 }
 
@@ -124,14 +181,15 @@ function wysiwyg_imageupload_update_form(&$form_state, $title, $preset, $floatin
   $title = check_plain($title);
   $imgpath = check_url(urldecode($_GET['imagepath']));
 
+  jquery_ui_dialog_child_js();
+  module_invoke('admin_menu', 'suppress');
+  drupal_set_title(t('Update image'));
+
   if(!file_exists(realpath($imgpath))) {
     drupal_set_message("The image does not exist ($imgpath)",'error');
     return array();
   }
 
-  jquery_ui_dialog_child_js();
-  module_invoke('admin_menu', 'suppress');
-  drupal_set_title(t('Update image'));
   // Save the image path in the cache to get it back later
   $cacheid = uniqid();
   cache_set($cacheid,$_GET['imagepath'],'cache',CACHE_TEMPORARY);
