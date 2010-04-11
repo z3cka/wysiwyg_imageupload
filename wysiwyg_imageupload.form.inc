@@ -91,7 +91,6 @@ function wysiwyg_imageupload_form_validate(&$form, &$form_state) {
 function wysiwyg_imageupload_upload_form(&$form_state,$form_id) {
   $form_id = check_plain($form_id);
   jquery_ui_dialog_child_js();
-  module_invoke('admin_menu', 'suppress');
   drupal_set_title(t('Upload image'));
   $form = array();
   $form['#attributes'] = array('enctype' => "multipart/form-data");
@@ -114,7 +113,7 @@ function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
   // have something similar on the javascript side.
   $form = array();
   $form['image_upload'] = array( '#type' => 'fieldset',
-    '#title'=> t('Upload picture'),
+    '#title'=> t('Upload image'),
     '#prefix' => '<div id="file_upload_group">',
     '#suffix' => '</div>'
   );
@@ -132,11 +131,11 @@ function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
 
   $form['image_upload']['alignment'] = array(
     '#type' => 'select',
-    '#title' => t('Text floating'),
+    '#title' => t('Image alignment'),
     '#options' => array(
-      'imgupl_floating_none' => t('Below image (none)'),
-      'imgupl_floating_left' => t('Text right beside image'),
-      'imgupl_floating_right' => t('Text left beside image')
+      'imgupl_floating_none' => t('Image is inline with the text (none)'),
+      'imgupl_floating_left' => t('Image on left, text on right'),
+      'imgupl_floating_right' => t('Image on right, text on left')
     ),
     '#default_value' => $defaults['floating']
   );
@@ -150,7 +149,7 @@ function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
 
   // styles.
   $styles = _wysiwyg_imageupload_get_image_styles();
-  if(count($styles) > 0) { // If any.
+  if (count($styles) > 0) { // If any.
     array_unshift($styles, t('None'));
     $form['image_upload']['style'] = array(
       '#type' => 'select',
@@ -169,7 +168,7 @@ function _wysiwyg_imageupload_details_form($title,$img,$defaults = array()){
 function _wysiwyg_imageupload_form_add_uploadfields(&$form, $form_id) {
   $form['image_upload']['wysiwyg_imageupload_file'] = array(
     '#type' => 'file',
-    '#title' => t('Choose an image'),
+    '#title' => t('Select an image to upload'),
     '#size' => 40,
   );
   $form['image_upload']['start_upload'] = array(
@@ -193,11 +192,10 @@ function wysiwyg_imageupload_update_form(&$form_state, $title, $preset, $floatin
   $imgpath = check_url(urldecode($_GET['imagepath']));
 
   jquery_ui_dialog_child_js();
-  module_invoke('admin_menu', 'suppress');
   drupal_set_title(t('Update image'));
 
-  if(!file_exists(realpath($imgpath))) {
-    drupal_set_message("The image does not exist ($imgpath)",'error');
+  if (!file_exists(realpath($imgpath))) {
+    drupal_set_message(t("The image does not exist (!path)",$imgpath),'error');
     return array();
   }
 

@@ -9,7 +9,7 @@ require_once('wysiwyg_imageupload.form.inc');
 require_once('wysiwyg_imageupload.ajax.inc');
 
 /*
- * Implementes hook_menu
+ * Implementes hook_menu().
  */
 function wysiwyg_imageupload_menu() {
   $items = array();
@@ -59,7 +59,7 @@ function wysiwyg_imageupload_menu() {
 }
 
 /*
- * Implementing the hook_wysiwyg_include_directory
+ * Implementing the hook_wysiwyg_include_directory().
  * This is needed to register our WYSIWYG Plugin
  */
 function wysiwyg_imageupload_wysiwyg_include_directory($type) {
@@ -70,18 +70,10 @@ function wysiwyg_imageupload_wysiwyg_include_directory($type) {
 }
 
 /*
- * Implementation of hook_perm
+ * Implementation of hook_perm().
  */
 function wysiwyg_imageupload_perm() {
   return array('use wysiwyg image upload');
-}
-
-/*
- * implementation of hook_init
- */
-function wysiwyg_imageupload_init() {
-  $m = drupal_get_path('module', 'wysiwyg_imageupload');
-  drupal_add_css($m.'/plugins/imgupload/imgupload.css');
 }
 
 /*
@@ -127,10 +119,10 @@ function _wysiwyg_imageupload_get_image_styles() {
   // Must have the format: Descriptive=css_style,Descriptive2=css_style2..
   $settings = variable_get('wysiwyg_imageupload_imgstyles', '');
   $styles = array();
-  if($settings != '') {
-    foreach(explode(',',$settings) as $style) {
+  if ($settings != '') {
+    foreach (explode(',', $settings) as $style) {
       $style = explode('=',$style);
-      $styles[$style[1]] = t($style[0]);
+      $styles[$style[1]] = t("!style",array('!style' => $style[0]));
     }
   }
   drupal_alter('wysiwyg_imageupload_image_styles', $styles);
@@ -168,23 +160,23 @@ function wysiwyg_imageupload_load_file($fid) {
  * @uid: Only images uploaded by that user are returned
  */
 function wysiwyg_imageupload_get_images($limit = NULL, $uid = NULL) {
- if($limit != NULL) {
-  $limit = " LIMIT $limit";
- }
- if($uid != NULL) {
-  $result = db_query('SELECT f.*,w.nid as parent_nid,w.vid FROM {files} as f RIGHT JOIN {wysiwyg_imageupload} AS w on w.fid = f.fid WHERE f.uid = %d  ORDER BY f.timestamp DESC'.$limit,$uid);
- }
- else {
-  $result = db_query('SELECT w.*,f.* FROM {files} as f INNER JOIN {wysiwyg_imageupload} AS w on w.fid = f.fid GROUP BY w.nid ORDER BY f.timestamp DESC'.$limit);
- }
+  if ($limit != NULL) {
+    $limit = " LIMIT $limit";
+  }
+  if ($uid != NULL) {
+    $result = db_query('SELECT f.*,w.nid as parent_nid,w.vid FROM {files} as f RIGHT JOIN {wysiwyg_imageupload} AS w on w.fid = f.fid WHERE f.uid = %d  ORDER BY f.timestamp DESC'.$limit,$uid);
+  }
+  else {
+    $result = db_query('SELECT w.*,f.* FROM {files} as f INNER JOIN {wysiwyg_imageupload} AS w on w.fid = f.fid GROUP BY w.nid ORDER BY f.timestamp DESC'.$limit);
+  }
 
- if($result != false) {
-   $images = array();
-   while($row = db_fetch_array($result)) {
-    $images[] = $row;
-   };
-   return $images;
- }
+  if ($result != FALSE) {
+    $images = array();
+    while ($row = db_fetch_array($result)) {
+      $images[] = $row;
+    };
+    return $images;
+  }
  // else
  return array();
 }
@@ -197,11 +189,11 @@ function _wysiwyg_imagegupload_allowed_presets() {
   $presets = imagecache_presets();
   foreach ($presets as $preset) {
     // We cant use the presetid here (http://drupal.org/node/694188).
-    $defaults[$preset['presetname']] = t($preset['presetname']);
+    $defaults[$preset['presetname']] = t("!preset",array('!preset' =>$preset['presetname']));
   }
   $presets_whitelist = variable_get('wysiwyg_imageupload_presets_whitelist', $defaults);
   // Get all disabled keys (value === 0).
-  $disabled_presets = array_keys($presets_whitelist,0, true);
+  $disabled_presets = array_keys($presets_whitelist,0, TRUE);
 
   // Remove those keys from the result.
   foreach($disabled_presets as $value) {
