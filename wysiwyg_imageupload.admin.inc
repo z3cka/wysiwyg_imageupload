@@ -1,13 +1,19 @@
 <?php
 // $Id$
 
-# Copyright (c) 2010 Impressive.media
-# Author: Eugen Mayer
+// Copyright (c) 2010 KontextWork
+// Author: Eugen Mayer
 
-/*
+/**
  * Providing a administration interface for tagging.
  */
 function wysiwyg_imageupload_admin_settings() {
+  $form['wysiwyg_imageupload_do_dependencies_check'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Do the dependencies checks'),
+    '#description' => t('If this is set, dependencies checks will be done and you see errors when editing a node. If something is not correct, you get a anoying error message!'),
+    '#default_value' => variable_get('wysiwyg_imageupload_skip_dependencies_check', true),
+  );
   $form['styles'] = array(
     '#type' => 'fieldset',
     '#title' => t('Styles'),
