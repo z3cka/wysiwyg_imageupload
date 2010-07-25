@@ -5,10 +5,8 @@
 
 /**
 * Implementation of hook_form_alter
-* Adding jquery_ui_dialog javascript / css definitions to the form.
 */
 function wysiwyg_imageupload_form_alter(&$form, $form_state, $form_id) {
-  
   if ($form['#id'] == 'node-form' || $form['#id'] == 'comment-form' ) {
     if(variable_get('wysiwyg_imageupload_skip_dependencies_check', true)) {
       _wysiwyg_imageupload_check_dependencies();
@@ -65,7 +63,7 @@ function wysiwyg_imageupload_form_alter(&$form, $form_state, $form_id) {
 }
 
 /**
-* Inlcude all js libs and css we need for the form
+* Adding jquery_ui_dialog javascript / css definitions to the form.
 */
 function _wysiwyg_imageupload_prepare_main_form(&$form,$form_state) {
   drupal_add_js('misc/jquery.form.js');
