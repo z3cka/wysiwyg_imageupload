@@ -7,6 +7,7 @@ require_once('wysiwyg_imageupload.file.inc');
 require_once('wysiwyg_imageupload.form.inc');
 require_once('wysiwyg_imageupload.ajax.inc');
 require_once('wysiwyg_imageupload.filter.inc');
+require_once('views/wysiwyg_imageupload.views.inc');
 
 /**
 * Implementation of hook_help().
@@ -74,7 +75,7 @@ function wysiwyg_imageupload_menu() {
   // Form for editing an image
   $items['wysiwyg_imageupload/reuse/%'] = array(
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('wysiwyg_imageupload_edit_form', 2, 3, true),
+    'page arguments' => array('wysiwyg_imageupload_edit_form', 2, 3, TRUE),
     'access callback' => 'user_access',
     'access arguments' => array('use wysiwyg image upload'),
     'type' => MENU_CALLBACK,
@@ -216,6 +217,33 @@ function wysiwyg_imageupload_get_images($limit = NULL, $uid = NULL, $group = nul
   return array();
 }
 
+/*
+ * Get all images of a nodes
+ * If a image is used several times in a node, it is only returned once
+ */
+
+function wysiwyg_imageupload_get_images_by_vids($vids = array()) {
+  if(!is_array($vids) || count($vids) === 0) {
+    return array();
+  }
+  $result = db_query('
+  SELECT * FROM {wysiwyg_imageupload_entity}_revision AS wuir 
+  	LEFT JOIN {wysiwyg_imageupload_entity} AS wui ON wuir.iid=wui.iid 
+  	LEFT JOIN {files} AS f ON wui.fid=f.fid 
+  	WHERE vid in ('.db_placeholders( $vids, 'int' ).') 
+  	GROUP BY f.fid', $vids);
+  
+  if ($result != FALSE) {    
+    $images = array();
+    while ($row = db_fetch_array($result)) {
+      $images[] = $row;
+    };
+    return $images;
+  }
+  // else
+  return array();
+}
+
 /**
 *  Those presets are needed for the browser and the details form
 */
@@ -283,6 +311,16 @@ function wysiwyg_imageupload_theme() {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function wysiwyg_imageupload_views_api() {
+  return array(
+    'api' => 2.0,
+  );
+}
+
+
+/**
 * wysiwyg_imageupload_render_image: renders the image for the node view
 */
 function theme_wysiwyg_imageupload_render_image_entity($img_obj, $arguments) {
@@ -329,7 +367,7 @@ function theme_wysiwyg_imageupload_render_image($img_obj, $arguments) {
 function theme_wysiwyg_imageupload_render_meta($img_obj,$arguments) {
   $output = '';
   if ($img_obj->title != '') {
-    $output .= "<div class='image_title'>{$img_obj->title}</div>";
+    $output .= "<span class='image_title'>{$img_obj->title}</span>";
   }
   return $output;
 }
@@ -338,7 +376,7 @@ function theme_wysiwyg_imageupload_render_meta($img_obj,$arguments) {
 * Renders the meta container of an image.
 */
 function theme_wysiwyg_imageupload_render_container($image,$meta,$img_obj,$arguments) {
-  return "<div class='wysiwyg_imageupload image {$img_obj->alignment} {$img_obj->style}'>$image <div class='image_meta'>$meta</div></div>";
+  return "<span class='wysiwyg_imageupload image {$img_obj->alignment} {$img_obj->style}'>$image <span class='image_meta'>$meta</span></span>";
 }
 
 /**
@@ -417,7 +455,7 @@ function _wysiwyg_imageupload_check_dependencies(&$requirements = null) {
   
   if (module_exists('jquery_ui')) {
     $jquiv = jquery_ui_get_version();
-    if (!preg_match('@1\.7\.\d+@',$jquiv)) {
+    if (!preg_match('@1\.[7,8]\.\d+@',$jquiv)) {
       $msg = 'Your jquery ui library version is to old to use wysiwyg_imageupload. You need at least 1.7.x and you are currently running '.$jquiv. ' Please read <a href="http://drupal.org/node/809812">this howto</a> on how to fix this.';
       if (is_array($requirements)) {
         $requirements['wyiwyg_imageupload_jquery_ui']['description'] = $msg;
