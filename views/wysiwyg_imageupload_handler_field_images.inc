@@ -1,5 +1,6 @@
 <?php
-class wysiwyg_imageupload_handler_field_images extends views_handler_field_prerender_list {  
+// $Id$
+class wysiwyg_imageupload_handler_field_images extends views_handler_field_prerender_list {
   function init(&$view, &$options) {
     $this->options['type'] = 'list';
     parent::init($view, $options);
@@ -18,7 +19,7 @@ class wysiwyg_imageupload_handler_field_images extends views_handler_field_prere
   function pre_render($values) {
     $vids = array();
     $this->items = array();
-    
+
     $this->field_alias = $this->aliases['vid'];
     foreach ($values as $result) {
       if ($result->{$this->aliases['vid']}) {
@@ -31,29 +32,29 @@ class wysiwyg_imageupload_handler_field_images extends views_handler_field_prere
     }
     $this->items[$this->field_alias] = $iids;
   }
-  
+
   function option_definition() {
     $options = parent::option_definition();
-    $options['preset'] = array('default' => TRUE);
+    $options['wui_preset'] = array('default' => TRUE);
     return $options;
   }
 
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
-    
+
     $presets = imagecache_presets();
     $styles = array();
     foreach ($presets as $preset) {
       // We can use the presetid here (http://drupal.org/node/694188).
       $styles[$preset['presetname']] = t("!preset", array('!preset' => $preset['presetname']));
     }
-    $form['preset'] = array(
+    $form['wui_preset'] = array(
       '#type' => 'select',
       '#title' => t('User this imagecache preset'),
-      '#default_value' =>  $this->options['preset'],
+      '#default_value' =>  $this->options['wui_preset'],
       '#options' => $styles,
     );
-    
+
     return $form;
   }
 
