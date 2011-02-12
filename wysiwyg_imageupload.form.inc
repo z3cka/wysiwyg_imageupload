@@ -209,12 +209,20 @@ function _wysiwyg_imageupload_details_form($img, $iid, $defaults = array()) {
     '#after_build' => array('drupalwiki_imageselect_element_register'),
   );
   // Imagecache preset
-  $form['image_upload_details']['imagecache'] = array(
-    '#type' => 'select',
-    '#title' => t('Size'),
-    '#default_value' => $defaults['imagecache'],
-    '#options' => _wysiwyg_imagegupload_allowed_presets(),
-  );
+  $ic_options = _wysiwyg_imagegupload_allowed_presets();
+  if (count($ic_options) == 1) {
+    $form['image_upload_details']['imagecache'] = array(
+      '#type' => 'hidden',
+      '#value' => array_pop($ic_options),
+    );
+  } else {
+    $form['image_upload_details']['imagecache'] = array(
+      '#type' => 'select',
+      '#title' => t('Size'),
+      '#default_value' => $defaults['imagecache'],
+      '#options' => $ic_options,
+    );
+  }
 
   // We group all those extras into this fieldset to hide them from the general UI.
   $form['image_upload_details']['extras'] = array(
