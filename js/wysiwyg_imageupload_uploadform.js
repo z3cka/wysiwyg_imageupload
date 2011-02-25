@@ -1,4 +1,3 @@
-// $Id$
 // Copyright (c) 2010 KontextWork GbR
 // Author: Eugen Mayer
 Drupal.behaviors.wysiwyg_imageupload_uploadform = function () {

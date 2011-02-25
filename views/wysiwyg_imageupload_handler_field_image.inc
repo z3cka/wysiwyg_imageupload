@@ -1,5 +1,4 @@
 <?php
-// $Id$
 class wysiwyg_imageupload_handler_field_image extends views_handler_field {
   function init(&$view, &$options) {
     parent::init($view, $options);

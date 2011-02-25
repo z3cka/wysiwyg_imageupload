@@ -1,5 +1,4 @@
 <?php
-// $Id$
 class wysiwyg_imageupload_handler_field_images extends views_handler_field_prerender_list {
   function init(&$view, &$options) {
     $this->options['type'] = 'list';

@@ -1,4 +1,3 @@
-; $Id$
 name = WYSIWYG Image upload Browser
 description = Browser for the last x Images inserted by the User 
 dependencies[] = wysiwyg_imageupload

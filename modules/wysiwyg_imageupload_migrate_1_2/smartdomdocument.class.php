@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * This class overcomes a few common annoyances with the DOMDocument class,

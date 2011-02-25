@@ -1,5 +1,4 @@
 <?php
-// $Id$
 // Copyright (c) 2010 KontextWork GbR
 // Author: Eugen Mayer
 

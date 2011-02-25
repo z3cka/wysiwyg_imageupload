@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function wysiwyg_imageupload_shadowbox_install() {
   db_query("UPDATE {system} SET weight = 10 WHERE name = 'wysiwyg_imageupload_shadowbox'");
