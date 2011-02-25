@@ -1,4 +1,3 @@
-// $Id$
 // Helper method.
 (function($) {
   $.fn.imguploadOuterHTML = function (s) {
