@@ -653,3 +653,11 @@ function _wysiwyg_imagegupload_align_options() {
     'imgupl_floating_right' => theme('image', "$m/images/right_float.png", $t = t('Image on right, text on left'), $t),      
   );
 }
+
+function wysiwyg_imageupload_wysiwyg_editor_settings_alter(&$settings, &$context)
+{
+  if ($context['profile']->editor == 'ckeditor')
+    {
+       $settings['removePlugins'] .= 'image,forms';
+    }
+}
