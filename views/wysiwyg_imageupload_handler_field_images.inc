@@ -60,6 +60,6 @@ class wysiwyg_imageupload_handler_field_images extends views_handler_field_prere
 
   function render_item($key, $value) {
     $img_obj = (object) $value;
-    return theme('imagecache', $this->options['preset'], $img_obj->filepath, NULL, $img_obj->title);
+    return theme('imagecache', $this->options['wui_preset'], $img_obj->filepath, NULL, $img_obj->title);
   }
 }
