@@ -124,7 +124,7 @@ function _wysiwyg_imageupload_save(&$entity) {
 
     $node = (array) $entity;
     foreach ($node as $key => $field) {
-      if (strpos($key, 'field_') === 0) {
+      if (strpos($key, 'field_') === 0 && is_array($field)) {
         foreach ($field as $index => $field_item) {
           if (!empty($field_item['value'])) {
             $value = $field_item['value'];
@@ -141,7 +141,10 @@ function _wysiwyg_imageupload_save(&$entity) {
  */
 function _wysiwyg_imagegupload_save_images(&$entity, $value) {
   $images = array();
-  preg_match_all(_wysiwyg_imageupload_filter_pattern(), $value, $matches);
+  $matches = NULL;
+  if (is_string($value)) {
+      preg_match_all(_wysiwyg_imageupload_filter_pattern(), $value, $matches);
+  }
 
   if(empty($matches)) {
     return;
