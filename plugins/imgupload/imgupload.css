@@ -1,7 +1,9 @@
 span.wysiwyg_imageupload {
-  border: 1px solid #CCC;
+  // Disabled by default
+  /* border: 1px solid #CCC;
+  background: #F3F3F3; */
+
   padding: 4px 4px 0px 4px;
-  background: #F3F3F3;
   text-align: center;
   margin: 0 auto;
 }
